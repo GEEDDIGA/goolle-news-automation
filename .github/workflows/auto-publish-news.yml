@@ -1,25 +1,56 @@
-name: Horn of Africa Tech News Publisher
+name: Goolle News Automation System
 
 on:
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 * * * *'
   workflow_dispatch:
 
 jobs:
   publish-tech-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate and Publish Tech News
+      - name: Generate and Publish News
         run: |
-          # Tech news script
-          echo 'Publishing tech news...'
-          exit 0
+          # Define AI and tech topics
+          TOPICS=("AI Integration" "Cloud Computing" "Cybersecurity" "Machine Learning" "Digital Transformation")
+          
+          # Select random topic
+          TOPIC=${TOPICS[$((RANDOM % ${#TOPICS[@]}))]}
+          TITLE="Breaking: $TOPIC News Update - $(date +%Y-%m-%d)"
+          CONTENT="<article><h2>$TITLE</h2><p>Latest industry developments in $TOPIC. Stay updated with cutting-edge technology trends and innovations reshaping the digital landscape.</p></article>"
+          
+          # Create JSON payload
+          cat > payload.json <<EOF
+{
+  "title": "$TITLE",
+  "content": "$CONTENT",
+  "status": "publish",
+  "categories": [1]
+}
+EOF
+          
+          # Publish to WordPress
+          curl -X POST -u admin:Rsx4yyy5t88gabrNtPn7iztX -H "Content-Type: application/json" -d @payload.json https://goolle.shop/wp-json/wp/v2/posts
+          echo "News published successfully!"
 
-  publish-political-news:
+  publish-industry-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate and Publish Political News
+      - name: Publish Industry Updates
         run: |
-          # Political news script
-          echo 'Publishing political news...'
-          exit 0
+          INDUSTRIES=("Finance" "Healthcare" "Retail" "Manufacturing" "Education")
+          INDUSTRY=${INDUSTRIES[$((RANDOM % ${#INDUSTRIES[@]}))]}
+          TITLE="$INDUSTRY Industry News - Global Updates $(date +%Y-%m-%d)"
+          CONTENT="<article><h2>$TITLE</h2><p>Global $INDUSTRY sector updates and strategic business developments. Industry leaders announce new innovations and partnerships.</p></article>"
+          
+          cat > ind_payload.json <<EOF
+{
+  "title": "$TITLE",
+  "content": "$CONTENT",
+  "status": "publish",
+  "categories": [1]
+}
+EOF
+          
+          curl -X POST -u admin:Rsx4yyy5t88gabrNtPn7iztX -H "Content-Type: application/json" -d @ind_payload.json https://goolle.shop/wp-json/wp/v2/posts
+          echo "Industry news published!"
