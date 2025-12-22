@@ -1,43 +1,78 @@
-name: Auto-Publish News to WordPress
+name: Horn of Africa Tech News Publisher
 
 on:
   schedule:
-    - cron: '0 * * * *'  # Every hour at minute 0
-  workflow_dispatch:      # Allow manual trigger
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      region:
+        description: 'Region focus'
+        required: false
+        default: 'Horn of Africa'
+      content_length:
+        description: 'Content length (short/medium/long)'
+        required: false
+        default: 'medium'
+      tone:
+        description: 'Writing tone (formal/casual/technical)'
+        required: false
+        default: 'professional'
 
 jobs:
-  publish-news:
+  publish-tech-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate and Publish News
+      - name: Generate Horn of Africa Tech News
         run: |
-          # Array of news topics to rotate
-          TOPICS=("Artificial Intelligence" "Technology News" "Business Updates" "Science Breakthroughs" "Digital Innovation")
-          TOPIC=${TOPICS[$RANDOM % ${#TOPICS[@]}]}
+          # Define Horn of Africa tech topics
+          HOA_TOPICS=("Ethiopian Tech" "Kenya Digital" "Somalia Tech" "Djibouti Tech" "Eritrea Tech" "AI East Africa" "Blockchain Horn" "Mobile Money" "FinTech Growth" "Cloud Computing")
           
-          # Generate title with current date/time
-          TITLE="$TOPIC - $(date +'%B %d, %Y at %I:%M %p')"
+          # Define technology trends  
+          TECH_TRENDS=("Artificial Intelligence" "Machine Learning" "Cloud Computing" "Blockchain" "5G Networks" "IoT" "Cybersecurity" "Data Analytics" "Digital Payments" "E-commerce" "Mobile Apps" "Web3")
           
-          # Generate content (in real implementation, fetch from API)
-          CONTENT="<p>Breaking news update in the field of $TOPIC. This article covers the latest developments and insights.</p><p>Our team continues to monitor emerging trends and brings you the freshest information as it breaks. Stay tuned for more updates on this important story.</p><p>Published on $(date +'%Y-%m-%d at %H:%M:%S') EAT</p>"
+          # Select random topic and trend
+          TOPIC=${HOA_TOPICS[$RANDOM % ${#HOA_TOPICS[@]}]}
+          TREND=${TECH_TRENDS[$RANDOM % ${#TECH_TRENDS[@]}]}
           
-          # Create JSON payload
-          JSON_PAYLOAD=$(cat <<EOF
+          # Content Parameters
+          REGION="Horn of Africa"
+          CONTENT_LENGTH="medium"
+          WRITING_TONE="professional"
+          
+          # Generate Title
+          TITLE="$TOPIC: $TREND Innovation - December 2025"
+          
+          # Generate Meta Description
+          META_DESC="Latest $TREND news and updates for $REGION. Discover how $TOPIC is transforming the tech landscape."
+          
+          # Generate Rich HTML Content
+          CONTENT="<article><h2>$TOPIC: Driving $TREND Innovation in $REGION</h2><p>The Horn of Africa region is experiencing significant growth in $TREND adoption. Organizations are leveraging $TOPIC to enhance competitive advantage and operational efficiency.</p><h3>Market Overview</h3><ul><li>Rapid technology adoption trends</li><li>Infrastructure development initiatives</li><li>Regulatory landscape evolution</li><li>Investment opportunities</li><li>Skills development programs</li></ul><p>Industry analysis indicates strong momentum. Leading companies are pioneering new solutions while startups drive innovation.</p><p>Published: $(date +'%Y-%m-%d %H:%M:%S') EAT</p></article>"
+          
+          # Create JSON Payload
+          cat > payload.json <<EOF
           {
             "title": "$TITLE",
             "content": "$CONTENT",
+            "excerpt": "$META_DESC",
             "status": "publish",
             "categories": [1],
-            "tags": ["news", "$TOPIC"]
+            "tags": ["Horn of Africa", "Technology", "$TOPIC", "$TREND", "tech news", "innovation"]
           }
 EOF
-          )
           
-          # Send to WordPress REST API
+          echo "Publishing: $TITLE"
+          echo "Topic: $TOPIC"
+          echo "Trend: $TREND"
+          echo "Region: $REGION"
+          echo "Content Length: $CONTENT_LENGTH"
+          echo "Writing Tone: $WRITING_TONE"
+          
+      - name: Publish to WordPress
+        run: |
           curl -X POST \
             -u admin:Rsx4yyy5t88gabrNtPn7iztX \
             -H "Content-Type: application/json" \
-            -d "$JSON_PAYLOAD" \
+            -d @payload.json \
             https://goolle.shop/wp-json/wp/v2/posts
           
           echo "News published successfully!"
