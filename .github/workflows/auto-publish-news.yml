@@ -1,0 +1,43 @@
+name: Auto-Publish News to WordPress
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # Every hour at minute 0
+  workflow_dispatch:      # Allow manual trigger
+
+jobs:
+  publish-news:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Generate and Publish News
+        run: |
+          # Array of news topics to rotate
+          TOPICS=("Artificial Intelligence" "Technology News" "Business Updates" "Science Breakthroughs" "Digital Innovation")
+          TOPIC=${TOPICS[$RANDOM % ${#TOPICS[@]}]}
+          
+          # Generate title with current date/time
+          TITLE="$TOPIC - $(date +'%B %d, %Y at %I:%M %p')"
+          
+          # Generate content (in real implementation, fetch from API)
+          CONTENT="<p>Breaking news update in the field of $TOPIC. This article covers the latest developments and insights.</p><p>Our team continues to monitor emerging trends and brings you the freshest information as it breaks. Stay tuned for more updates on this important story.</p><p>Published on $(date +'%Y-%m-%d at %H:%M:%S') EAT</p>"
+          
+          # Create JSON payload
+          JSON_PAYLOAD=$(cat <<EOF
+          {
+            "title": "$TITLE",
+            "content": "$CONTENT",
+            "status": "publish",
+            "categories": [1],
+            "tags": ["news", "$TOPIC"]
+          }
+EOF
+          )
+          
+          # Send to WordPress REST API
+          curl -X POST \
+            -u admin:Rsx4yyy5t88gabrNtPn7iztX \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD" \
+            https://goolle.shop/wp-json/wp/v2/posts
+          
+          echo "News published successfully!"
