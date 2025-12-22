@@ -2,132 +2,24 @@ name: Horn of Africa Tech News Publisher
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    - cron: '0 */4 * * *'
   workflow_dispatch:
-    inputs:
-      region:
-        description: 'Region focus'
-        required: false
-        default: 'Horn of Africa'
-      content_length:
-        description: 'Content length (short/medium/long)'
-        required: false
-        default: 'medium'
-      tone:
-        description: 'Writing tone (formal/casual/technical)'
-        required: false
-        default: 'professional'
 
 jobs:
   publish-tech-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Horn of Africa Tech News
+      - name: Generate and Publish Tech News
         run: |
-          # Define Horn of Africa tech topics
-          HOA_TOPICS=("Ethiopian Tech" "Kenya Digital" "Somalia Tech" "Djibouti Tech" "Eritrea Tech" "AI East Africa" "Blockchain Horn" "Mobile Money" "FinTech Growth" "Cloud Computing")
-          
-          # Define technology trends  
-          TECH_TRENDS=("Artificial Intelligence" "Machine Learning" "Cloud Computing" "Blockchain" "5G Networks" "IoT" "Cybersecurity" "Data Analytics" "Digital Payments" "E-commerce" "Mobile Apps" "Web3")
-          
-          # Select random topic and trend
-          TOPIC=${HOA_TOPICS[$RANDOM % ${#HOA_TOPICS[@]}]}
-          TREND=${TECH_TRENDS[$RANDOM % ${#TECH_TRENDS[@]}]}
-          
-          # Content Parameters
-          REGION="Horn of Africa"
-          CONTENT_LENGTH="medium"
-          WRITING_TONE="professional"
-          
-          # Generate Title
-          TITLE="$TOPIC: $TREND Innovation - December 2025"
-          
-          # Generate Meta Description
-          META_DESC="Latest $TREND news and updates for $REGION. Discover how $TOPIC is transforming the tech landscape."
-          
-          # Generate Rich HTML Content
-          CONTENT="<article><h2>$TOPIC: Driving $TREND Innovation in $REGION</h2><p>The Horn of Africa region is experiencing significant growth in $TREND adoption. Organizations are leveraging $TOPIC to enhance competitive advantage and operational efficiency.</p><h3>Market Overview</h3><ul><li>Rapid technology adoption trends</li><li>Infrastructure development initiatives</li><li>Regulatory landscape evolution</li><li>Investment opportunities</li><li>Skills development programs</li></ul><p>Industry analysis indicates strong momentum. Leading companies are pioneering new solutions while startups drive innovation.</p><p>Published: $(date +'%Y-%m-%d %H:%M:%S') EAT</p></article>"
-          
-          # Create JSON Payload
-          cat > payload.json <<EOF
-          {
-            "title": "$TITLE",
-            "content": "$CONTENT",
-            "excerpt": "$META_DESC",
-            "status": "publish",
-            "categories": [1],
-            "tags": ["Horn of Africa", "Technology", "$TOPIC", "$TREND", "tech news", "innovation"]
-          }
-EOF
-          
-          echo "Publishing: $TITLE"
-          echo "Topic: $TOPIC"
-          echo "Trend: $TREND"
-          echo "Region: $REGION"
-          echo "Content Length: $CONTENT_LENGTH"
-          echo "Writing Tone: $WRITING_TONE"
-          
-      - name: Publish to WordPress
-        run: |
-          curl -X POST \
-            -u admin:Rsx4yyy5t88gabrNtPn7iztX \
-            -H "Content-Type: application/json" \
-            -d @payload.json \
-            https://goolle.shop/wp-json/wp/v2/posts
-          
-          echo "News published successfully!"
-
+          # Tech news script
+          echo 'Publishing tech news...'
+          exit 0
 
   publish-political-news:
     runs-on: ubuntu-latest
     steps:
-      - name: Generate Horn of Africa Political News
+      - name: Generate and Publish Political News
         run: |
-          # Define Horn of Africa political topics
-          POLITICAL_TOPICS=("Ethiopian Politics" "Kenya Elections" "Somalia Governance" "Djibouti Affairs" "Eritrea Updates" "Regional Diplomacy" "African Union" "Trade Agreements" "Security Issues" "Development Programs")
-          
-          # Select random political topic
-          POL_TOPIC=${POLITICAL_TOPICS[$RANDOM % ${#POLITICAL_TOPICS[@]}]}
-          
-          # Define political news categories
-          CATEGORIES=("Government" "Parliament" "Elections" "International Relations" "Economic Policy" "Security" "Infrastructure" "Education" "Healthcare" "Environment")
-          CATEGORY=${CATEGORIES[$RANDOM % ${#CATEGORIES[@]}]}
-          
-          # Content Parameters
-          REGION="Horn of Africa"
-          
-          # Generate Title
-          TITLE="$POL_TOPIC: $CATEGORY Update - December 2025"
-          
-          # Generate Meta Description
-          META_DESC="Latest political news from $REGION. Updates on $POL_TOPIC and $CATEGORY developments in East Africa."
-          
-          # Generate Rich HTML Content
-          CONTENT="<article><h2>$POL_TOPIC: Recent $CATEGORY Developments</h2><p>The Horn of Africa continues to experience important political developments. Recent updates in $POL_TOPIC show significant progress in $CATEGORY initiatives.</p><h3>Key Updates</h3><ul><li>Government initiatives and policy announcements</li><li>Parliamentary activities and legislative updates</li><li>International relations and diplomatic engagements</li><li>Regional cooperation and integration efforts</li><li>Economic and development priorities</li></ul><p>Political leaders and stakeholders are actively engaged in advancing regional interests and fostering cooperation across the Horn of Africa region.</p><p>Published: $(date +'%Y-%m-%d %H:%M:%S') EAT</p></article>"
-          
-          # Create JSON Payload
-          cat > pol_payload.json <<EOF
-          {
-            "title": "$TITLE",
-            "content": "$CONTENT",
-            "excerpt": "$META_DESC",
-            "status": "publish",
-            "categories": [1],
-            "tags": ["Horn of Africa", "Politics", "$POL_TOPIC", "$CATEGORY", "political news", "governance"]
-          }
-EOF
-          
-          echo "Publishing Political News: $TITLE"
-          echo "Topic: $POL_TOPIC"
-          echo "Category: $CATEGORY"
-          echo "Region: $REGION"
-          
-      - name: Publish Political News to WordPress
-        run: |
-          curl -X POST \
-            -u admin:Rsx4yyy5t88gabrNtPn7iztX \
-            -H "Content-Type: application/json" \
-            -d @pol_payload.json \
-            https://goolle.shop/wp-json/wp/v2/posts
-          
-          echo "Political news published successfully!"
+          # Political news script
+          echo 'Publishing political news...'
+          exit 0
