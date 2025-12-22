@@ -1,23 +1,37 @@
-name: Goolle News Automation
+name: Goolle News Automation - Scaling Phase
 
 on:
   schedule:
-    - cron: '0 * * * *'
+    # Run 10 times daily for 10 posts/day
+    - cron: '0 6,7,8,9,10,12,13,14,15,16 * * *'  # 6 AM, 7 AM, 8 AM, 9 AM, 10 AM, 12 PM, 1 PM, 2 PM, 3 PM, 4 PM EAT
   workflow_dispatch:
 
 jobs:
-  publish-hourly-news:
+  publish-scaling-news:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        news_type: ['tech', 'business']
+        news_type: ['AI & Automation', 'Technology', 'Business', 'Enterprise Solutions', 'Cloud', 'Cybersecurity', 'Data Analytics', 'E-commerce', 'Digital Transformation', 'Premium Apps']
+        batch: [1]  # One execution per scheduled time
+    
     steps:
-      - name: Publish News
+      - name: Publish Scaling News Articles
         run: |
-          NEWS_TITLE="${{ matrix.news_type }} Industry Update $(date +%Y-%m-%d)"
+          NEWS_TITLE="${{ matrix.news_type }} Industry Update $(date +%Y-%m-%d_%H:%M)"
+          NEWS_CONTENT="Latest developments and insights in ${{ matrix.news_type }}. Exclusive analysis covering market trends, innovation breakthroughs, and strategic insights not found elsewhere online."
+          
           curl -X POST \
             -u admin:Rsx4yyy5t88gabrNtPn7iztX \
             -H "Content-Type: application/json" \
-            -d '{"title":"'"$NEWS_TITLE"'","content":"Latest developments in the industry","status":"publish"}' \
+            -d '{"title":"'"$NEWS_TITLE"'","content":"'"$NEWS_CONTENT"'","status":"publish","categories":["Technology"],"tags":["'"${{ matrix.news_type }}"'","automation","insights"]}' \
             https://goolle.shop/wp-json/wp/v2/posts
-          echo "News article published"
+          
+          echo "Published: $NEWS_TITLE"
+      
+      - name: Trigger SEO Optimization
+        run: |
+          echo "SEO optimization triggered for ${{ matrix.news_type }}"
+          # Future: Add Yoast API call for SEO optimization
+      
+      - name: Notify Completion
+        run: echo "Scaling batch for ${{ matrix.news_type }} completed at $(date)"
