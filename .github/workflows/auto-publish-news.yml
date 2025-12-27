@@ -20,7 +20,7 @@ jobs:
           NEWS_TITLE="${{ matrix.news_type }} Industry Update $(date +%Y-%m-%d_%H:%M)"
           NEWS_CONTENT="Latest developments and insights in ${{ matrix.news_type }}. Exclusive analysis covering market trends, innovation breakthroughs, and strategic insights not found elsewhere online."
           
-          curl -k  --retry 3 --retry-all-errors-X POST \
+          curl -k  --retry 3 --retry-all-errors -X POST \
             -u admin:Rsx4yyy5t88gabrNtPn7iztX \
             -H "Content-Type: application/json" \
             -d '{"title":"'"$NEWS_TITLE"'","content":"'"$NEWS_CONTENT"'","status":"publish","categories":["Technology"],"tags":["'"${{ matrix.news_type }}"'","automation","insights"]}' \
