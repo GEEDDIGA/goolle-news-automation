@@ -1,9 +1,8 @@
 name: Goolle News Automation - Scaling Phase
-
 on:
   schedule:
     # Run 10 times daily for 10 posts/day
-    - cron: '0 6,7,8,9,10,12,13,14,15,16 * * *'  # 6 AM, 7 AM, 8 AM, 9 AM, 10 AM, 12 PM, 1 PM, 2 PM, 3 PM, 4 PM EAT
+    - cron: '0 6,7,8,9,10,12,13,14,15,16 * * *' # 6 AM, 7 AM, 8 AM, 9 AM, 10 AM, 12 PM, 1 PM, 2 PM, 3 PM, 4 PM EAT
   workflow_dispatch:
 
 jobs:
@@ -12,26 +11,68 @@ jobs:
     strategy:
       matrix:
         news_type: ['AI & Automation', 'Technology', 'Business', 'Enterprise Solutions', 'Cloud', 'Cybersecurity', 'Data Analytics', 'E-commerce', 'Digital Transformation', 'Premium Apps']
-        batch: [1]  # One execution per scheduled time
+        batch: [1] # One execution per scheduled time
     
     steps:
+      - name: Check API Endpoint
+        run: |
+          echo "Checking WordPress API endpoint availability..."
+          for i in {1..3}; do
+            if curl -s -o /dev/null -w "%{http_code}" --connect-timeout 10 --max-time 15 https://goolle.shop/wp-json/wp/v2/posts; then
+              echo "API endpoint is reachable"
+              break
+            else
+              echo "Attempt $i: Endpoint check failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+
       - name: Publish Scaling News Articles
         run: |
           NEWS_TITLE="${{ matrix.news_type }} Industry Update $(date +%Y-%m-%d_%H:%M)"
           NEWS_CONTENT="Latest developments and insights in ${{ matrix.news_type }}. Exclusive analysis covering market trends, innovation breakthroughs, and strategic insights not found elsewhere online."
           
-          curl -k  --retry 3 --retry-all-errors -X POST \
+          # Create JSON payload
+          PAYLOAD=$(cat <<'EOF'
+          {"title":"'"$NEWS_TITLE"'","content":"'"$NEWS_CONTENT"'","status":"publish","categories":["Technology"],"tags":["'"${{ matrix.news_type }}"'","automation","insights"]}
+          EOF
+          )
+          
+          # Make the request with improved error handling
+          RESPONSE=$(curl -s -w "\n%{http_code}" --connect-timeout 10 --max-time 30 \
+            -k --retry 3 --retry-delay 2 --retry-max-time 120 \
+            -X POST \
             -u admin:Rsx4yyy5t88gabrNtPn7iztX \
             -H "Content-Type: application/json" \
-            -d '{"title":"'"$NEWS_TITLE"'","content":"'"$NEWS_CONTENT"'","status":"publish","categories":["Technology"],"tags":["'"${{ matrix.news_type }}"'","automation","insights"]}' \
-            https://goolle.shop/wp-json/wp/v2/posts
+            -d "$PAYLOAD" \
+            https://goolle.shop/wp-json/wp/v2/posts)
           
-          echo "Published: $NEWS_TITLE"
-      
+          # Parse response
+          HTTP_CODE=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n-1)
+          
+          echo "HTTP Status Code: $HTTP_CODE"
+          echo "Response: $BODY"
+          
+          # Check if request was successful
+          if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 300 ]; then
+            echo "✓ Published: $NEWS_TITLE"
+            exit 0
+          elif [ "$HTTP_CODE" -ge 400 ] && [ "$HTTP_CODE" -lt 500 ]; then
+            echo "✗ Client error ($HTTP_CODE): Check credentials and payload"
+            exit 1
+          elif [ "$HTTP_CODE" -ge 500 ]; then
+            echo "✗ Server error ($HTTP_CODE): WordPress API server is having issues"
+            exit 1
+          else
+            echo "✗ Unexpected HTTP code: $HTTP_CODE"
+            exit 1
+          fi
+        
       - name: Trigger SEO Optimization
         run: |
           echo "SEO optimization triggered for ${{ matrix.news_type }}"
           # Future: Add Yoast API call for SEO optimization
-      
+        
       - name: Notify Completion
         run: echo "Scaling batch for ${{ matrix.news_type }} completed at $(date)"
