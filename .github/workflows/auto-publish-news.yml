@@ -1,8 +1,9 @@
 name: Goolle News Automation - Scaling Phase
+
 on:
   schedule:
-    # Run 10 times daily for 10 posts/day
-    - cron: '0 6,7,8,9,10,12,13,14,15,16 * * *' # 6 AM, 7 AM, 8 AM, 9 AM, 10 AM, 12 PM, 1 PM, 2 PM, 3 PM, 4 PM EAT
+    # Run 10 times daily for 10 posts/day (EAT)
+    - cron: '0 3,4,5,6,7,9,10,11,12,13 * * *'  # GitHub uses UTC; adjust from EAT
   workflow_dispatch:
 
 jobs:
@@ -10,58 +11,79 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        news_type: ['AI & Automation', 'Technology', 'Business', 'Enterprise Solutions', 'Cloud', 'Cybersecurity', 'Data Analytics', 'E-commerce', 'Digital Transformation', 'Premium Apps']
-        batch: [1] # One execution per scheduled time
-    
+        news_type:
+          - "AI & Automation"
+          - "Technology"
+          - "Business"
+          - "Enterprise Solutions"
+          - "Cloud"
+          - "Cybersecurity"
+          - "Data Analytics"
+          - "E-commerce"
+          - "Digital Transformation"
+          - "Premium Apps"
+        batch: [1]
+
     steps:
       - name: Check API Endpoint Connectivity
         continue-on-error: true
         run: |
           echo "Testing WordPress API endpoint connectivity..."
-          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" --connect-timeout 10 --max-time 15 https://goolle.shop/wp-json/wp/v2/posts || echo "Endpoint check failed"
+          curl -s -o /dev/null -w "HTTP Status: %{http_code}\n" \
+            --connect-timeout 10 --max-time 15 \
+            "${{ secrets.WP_API_URL }}/wp-json/wp/v2/posts" || \
+            echo "Endpoint check failed"
 
       - name: Publish Scaling News Articles
         continue-on-error: true
+        env:
+          WP_USER: ${{ secrets.WP_USER }}
+          WP_APP_PASSWORD: ${{ secrets.WP_APP_PASSWORD }}
+          WP_API_URL: ${{ secrets.WP_API_URL }}
         run: |
           NEWS_TITLE="${{ matrix.news_type }} Industry Update $(date +%Y-%m-%d_%H:%M)"
           NEWS_CONTENT="Latest developments and insights in ${{ matrix.news_type }}. Exclusive analysis covering market trends, innovation breakthroughs, and strategic insights not found elsewhere online."
-          
+
           echo "Preparing to publish: $NEWS_TITLE"
-          
-          # Make the request with improved error handling and longer timeout
-          HTTP_RESPONSE=$(curl -s -w "\n%{http_code}" --connect-timeout 15 --max-time 60 \
+
+          HTTP_RESPONSE=$(curl -s -w "\n%{http_code}" \
+            --connect-timeout 15 --max-time 60 \
             -k --retry 2 --retry-delay 5 \
             -X POST \
-            -u admin:Rsx4yyy5t88gabrNtPn7iztX \
+            -u "${WP_USER}:${WP_APP_PASSWORD}" \
             -H "Content-Type: application/json" \
-            -d "{\"title\":\"$NEWS_TITLE\",\"content\":\"$NEWS_CONTENT\",\"status\":\"publish\",\"categories\":[\"Technology\"],\"tags\":[\"${{ matrix.news_type }}\",\"automation\",\"insights\"]}" \
-            https://goolle.shop/wp-json/wp/v2/posts 2>&1)
-          
-          # Extract the last line as HTTP code and everything before as response body
+            -d "{
+              \"title\": \"${NEWS_TITLE}\",
+              \"content\": \"${NEWS_CONTENT}\",
+              \"status\": \"publish\",
+              \"categories\": [\"Technology\"],
+              \"tags\": [\"${{ matrix.news_type }}\",\"automation\",\"insights\"]
+            }" \
+            "${WP_API_URL}/wp-json/wp/v2/posts" 2>&1)
+
           HTTP_CODE=$(echo "$HTTP_RESPONSE" | tail -n1)
           RESPONSE_BODY=$(echo "$HTTP_RESPONSE" | head -n-1)
-          
+
           echo "HTTP Status Code: $HTTP_CODE"
           echo "Response (first 500 chars): $(echo "$RESPONSE_BODY" | head -c 500)"
-          
-          # Log based on status code but don't fail the job
+
           if [ "$HTTP_CODE" = "201" ] || [ "$HTTP_CODE" = "200" ]; then
-            echo "✓ Successfully published: $NEWS_TITLE"
+            echo "Successfully published: $NEWS_TITLE"
           elif [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "403" ]; then
-            echo "⚠ Authentication failed (HTTP $HTTP_CODE). Check credentials."
+            echo "Authentication failed (HTTP $HTTP_CODE). Check credentials."
           elif [ "$HTTP_CODE" = "400" ]; then
-            echo "⚠ Bad request (HTTP 400). Check payload format."
+            echo "Bad request (HTTP 400). Check payload format."
           elif [ "$HTTP_CODE" -ge 500 ]; then
-            echo "⚠ Server error (HTTP $HTTP_CODE). WordPress API unavailable."
+            echo "Server error (HTTP $HTTP_CODE). WordPress API unavailable."
           else
-            echo "⚠ Unexpected response (HTTP $HTTP_CODE): $RESPONSE_BODY"
+            echo "Unexpected response (HTTP $HTTP_CODE): $RESPONSE_BODY"
           fi
-        
+
       - name: Trigger SEO Optimization
         continue-on-error: true
         run: |
           echo "SEO optimization triggered for ${{ matrix.news_type }}"
-          # Future: Add Yoast API call for SEO optimization
-        
+          # Future: Add Yoast or other SEO API integration here
+
       - name: Notify Completion
         run: echo "Scaling batch for ${{ matrix.news_type }} completed at $(date)"
